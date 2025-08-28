@@ -17,9 +17,6 @@
 ### Aurora PostgreSQL Version Upgrade
 - Upgrade Aurora PostgreSQL from 15.10 to 17.5 for improved JSON handling, performance, and feature set.
 
-### Aurora Pricing Model Change
-- Evaluate and migrate from Aurora Standard to Aurora IO-Optimized to reduce IOPS costs (currently ~35% of cluster cost).
-
 ### Instance Type Migration
 - Migrate from legacy Intel-based instances to Graviton R8G for better price/performance ratio.
 
@@ -75,7 +72,7 @@
 
 6. **Instance & Pricing Model Migration**
    - Migrate to Graviton R8G instances.
-   - Assess and migrate to Aurora IO-Optimized.
+   - Assess and migrate to Aurora IO-Optimized.(Hold)
 
 7. **Query & Connection Optimization**
    - Implement RDS Proxy or PgBouncer.
