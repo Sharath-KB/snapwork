@@ -85,6 +85,14 @@
    - Perform UAT on staging cluster.
    - Roll out changes to production with rollback plan.
 
+## Rationale
+
+- All destructive actions validated in staging.
+- Batched deletes and repack minimize impact.
+- Storage archival is automated and policy-driven.
+- Upgrade and migration steps follow AWS best practices.
+- All actions documented for audit and rollback.
+
 ## Workflow Overview
 
 ```mermaid
