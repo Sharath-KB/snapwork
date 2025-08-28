@@ -9,7 +9,6 @@
 ## Decision
 
 ### Storage Optimization & Archival
-- Offload audit_logs entries older than 365 days to Amazon S3 (Deep Glacier) using Aurora UNLOAD.
 - Archive monthly RDS snapshots in S3 for 12 years (Deep Glacier).
 - Validate exported/deleted data against a restored snapshot before final purge.
 - Drop four identified large tables to reclaim storage.
@@ -36,8 +35,8 @@
 
 ## Alternatives Considered
 
-- Status Quo: Continue with current architecture, risking further cost and performance degradation.
-- Archival Methods: AWS DMS, manual psql/copy, snapshot export (less scalable, less granular).
+- Status Quo: Continue with current architecture, risking further cost.
+- Archival Methods: snapshot export (less scalable, less granular).
 - Validation: Direct deletion vs. snapshot cross-check for safety.
 - Instance Types: Intel vs. Graviton (Graviton offers better performance/cost).
 - Pricing Models: Aurora Standard vs. IO-Optimized (IO-Optimized reduces IOPS cost for high-throughput workloads).
@@ -50,13 +49,13 @@
 
 ## Implementation Plan (Phased)
 
-1. **Drop Large Tables**
-   - Drop tables: customer_stage_24Dec2024, autocircle_multibureau_2Feb24, customer_stage_14Jun2024, customer_stage_20Jan24.
-   - Monitor storage reclamation.
-
-2. **Snapshot Restore & Audit_logs Validation**
+1.**Snapshot Restore & Audit_logs Validation**
    - Restore RDS snapshot to a staging cluster.
    - Cross-check audit_logs entries to ensure only intended data is targeted for deletion.
+
+2. **Drop Large Tables**
+   - Drop tables: customer_stage_24Dec2024, autocircle_multibureau_2Feb24, customer_stage_14Jun2024, customer_stage_20Jan24.
+   - Monitor storage reclamation.
 
 3. **Archive & Purge Audit_logs**
    - Create S3 bucket with Deep Glacier lifecycle policy.
@@ -101,12 +100,7 @@ flowchart TD
     I --> J[UAT Testing & Production Rollout]
 ```
 
-## References
 
-- [Aurora PostgreSQL UNLOAD to S3](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.UNLOAD.html)
-- [AWS S3 Lifecycle Policies](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-configuration-examples.html)
-- [Aurora IO-Optimized](https://aws.amazon.com/rds/aurora/pricing/)
-- [Graviton Instances](https://aws.amazon.com/ec2/graviton/)
 ## Workflow Flowchart
 
 Below is a textual flowchart for the Aurora PostgreSQL RDS optimization workflow:
@@ -135,39 +129,14 @@ Below is a textual flowchart for the Aurora PostgreSQL RDS optimization workflow
    ↓
 12. Perform UAT on staging cluster and roll out changes to production with rollback plan
 - [pg_repack](https://reorg.github.io/pg_repack/)
-## High-Level Architecture Diagram
 
-Aurora PostgreSQL RDS Optimization & Audit Logs Cleanup
+## References
 
-- AWS Aurora PostgreSQL Cluster (Primary & Replicas)
-    - Large Tables (audit_logs, customer_stage_24Dec2024, autocircle_multibureau_2Feb24, customer_stage_14Jun2024, customer_stage_20Jan24)
-    - Partitioned audit_logs Table
-- AWS S3 (Deep Glacier)
-    - Monthly RDS Snapshots (12 years retention)
-- Staging Cluster (Restored Snapshot)
-    - Used for validation of audit_logs entries before deletion
-- Graviton R8G Instances (Post-migration)
-- Aurora IO-Optimized Pricing Model (Post-migration)
-- RDS Proxy / PgBouncer (Connection Pooling)
-- Backend Maintenance (Vacuum, pg_repack, bloat control)
-- Monitoring & Alerts (AWS CloudWatch, Transaction ID wraparound)
-
-```
-Aurora PostgreSQL Cluster
-    ├── Large Tables
-    ├── Partitioned audit_logs
-    ├── Replicas
-    ├── RDS Proxy / PgBouncer
-    └── Monitoring & Alerts
-         ↓
-Staging Cluster (Snapshot Restore & Validation)
-         ↓
-Monthly Snapshots → S3 (Deep Glacier)
-         ↓
-Graviton R8G & IO-Optimized (Migration)
-         ↓
-Backend Maintenance (Vacuum, pg_repack)
-```
+- [Aurora PostgreSQL UNLOAD to S3](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.UNLOAD.html)
+- [AWS S3 Lifecycle Policies](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-configuration-examples.html)
+- [Aurora IO-Optimized](https://aws.amazon.com/rds/aurora/pricing/)
+- [Graviton Instances](https://aws.amazon.com/ec2/graviton/)
+  
 ## Validation & Cleanup SQL for Restored Snapshot
 
 **1. Check if tables exist in restored DB:**
